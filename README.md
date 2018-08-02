@@ -29,8 +29,6 @@ C.编译内核
 
 4、物理环境及性能
 
-CPU ：4 cores 
-Memery：16G
-NIC：Intel 82599 10G
+CPU ：4 cores    Memery：16G     NIC：Intel 82599 10G
 
 Performance ：64bit 7G
