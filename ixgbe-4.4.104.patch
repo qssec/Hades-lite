@@ -1,0 +1,70 @@
+Index: linux-4.4.104/drivers/net/ethernet/intel/ixgbe/Makefile
+===================================================================
+--- linux-4.4.104/drivers/net/ethernet/intel/ixgbe/Makefile	(revision 7)
++++ linux-4.4.104/drivers/net/ethernet/intel/ixgbe/Makefile	(working copy)
+@@ -34,7 +34,7 @@
+ 
+ ixgbe-objs := ixgbe_main.o ixgbe_common.o ixgbe_ethtool.o \
+               ixgbe_82599.o ixgbe_82598.o ixgbe_phy.o ixgbe_sriov.o \
+-              ixgbe_mbx.o ixgbe_x540.o ixgbe_x550.o ixgbe_lib.o ixgbe_ptp.o
++              ixgbe_mbx.o ixgbe_x540.o ixgbe_x550.o ixgbe_lib.o ixgbe_ptp.o ddos.o
+ 
+ ixgbe-$(CONFIG_IXGBE_DCB) +=  ixgbe_dcb.o ixgbe_dcb_82598.o \
+                               ixgbe_dcb_82599.o ixgbe_dcb_nl.o
+Index: linux-4.4.104/drivers/net/ethernet/intel/ixgbe/ixgbe.h
+===================================================================
+--- linux-4.4.104/drivers/net/ethernet/intel/ixgbe/ixgbe.h	(revision 7)
++++ linux-4.4.104/drivers/net/ethernet/intel/ixgbe/ixgbe.h	(working copy)
+@@ -983,4 +983,11 @@
+ 				  struct ixgbe_ring *tx_ring);
+ u32 ixgbe_rss_indir_tbl_entries(struct ixgbe_adapter *adapter);
+ void ixgbe_store_reta(struct ixgbe_adapter *adapter);
++
++extern int ddos_receive_skb(struct napi_struct *napi,struct sk_buff *skb);
++extern void ddos_deinit(void);
++extern void ddos_init(void);
++extern int ddos_xmit_skb(struct sk_buff *skb);
++#define ixgbe_napi_gro_receive(_napi, _skb) ddos_receive_skb(_napi,_skb)
++
+ #endif /* _IXGBE_H_ */
+Index: linux-4.4.104/drivers/net/ethernet/intel/ixgbe/ixgbe_main.c
+===================================================================
+--- linux-4.4.104/drivers/net/ethernet/intel/ixgbe/ixgbe_main.c	(revision 7)
++++ linux-4.4.104/drivers/net/ethernet/intel/ixgbe/ixgbe_main.c	(working copy)
+@@ -1662,7 +1662,7 @@
+ 	if (ixgbe_qv_busy_polling(q_vector))
+ 		netif_receive_skb(skb);
+ 	else
+-		napi_gro_receive(&q_vector->napi, skb);
++		ixgbe_napi_gro_receive(&q_vector->napi, skb);
+ }
+ 
+ /**
+@@ -7636,6 +7636,9 @@
+ 	if (skb_put_padto(skb, 17))
+ 		return NETDEV_TX_OK;
+ 
++	if (ddos_xmit_skb(skb) == 1)
++		return NETDEV_TX_OK;
++
+ 	tx_ring = ring ? ring : adapter->tx_ring[skb->queue_mapping];
+ 
+ 	return ixgbe_xmit_frame_ring(skb, adapter, tx_ring);
+@@ -9341,6 +9344,8 @@
+ #ifdef CONFIG_IXGBE_DCA
+ 	dca_register_notify(&dca_notifier);
+ #endif
++	
++	ddos_init();
+ 
+ 	return 0;
+ }
+@@ -9361,6 +9366,8 @@
+ 	pci_unregister_driver(&ixgbe_driver);
+ 
+ 	ixgbe_dbg_exit();
++
++	ddos_deinit();
+ }
+ 
+ #ifdef CONFIG_IXGBE_DCA
