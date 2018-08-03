@@ -12,7 +12,7 @@
 
 由于ddos flood 流量大部分为异常流量，为减轻内核处理负载，直接将非法流量在驱动层面直接丢弃。驱动按照NUMA 统一map内存表项分配到不通CPU上面，然后将每core对应的内存从NUMA中进行划分。防止remote memory access。
   
-core0 为物理CPU1，core1为物理CPU2，core2为物理CPU3，core3为物理CPU4。服务器将每颗CPU引出的物理内存作为localMemory，访问时采用访问本地内存优先的策略，阻止CPU之间交互报文。同时为阻止CPU之间进行报文交互，PCIE Local Node需要将会话进行隔离。NIC侧内核需要将queue与指定的node进行绑定。申请内存做DMA保证内存访问一致性。
+core0 为物理CPU1，core1为物理CPU2，core2为物理CPU3，core3为物理CPU4。服务器将每颗CPU引出的物理内存作为LocalMemory，访问时采用访问本地内存优先的策略，阻止CPU之间交互报文。同时为阻止CPU之间进行报文交互，PCIE Local Node需要将会话进行隔离。NIC侧内核需要将queue与指定的node进行绑定。申请内存做DMA保证内存访问一致性。
   
   
 3、 使用说明
