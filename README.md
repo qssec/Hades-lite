@@ -14,6 +14,7 @@
   
 core0 为物理CPU1，core1为物理CPU2，core2为物理CPU3，core3为物理CPU4。服务器将每颗CPU引出的物理内存作为LocalMemory，访问时采用访问本地内存优先的策略，阻止CPU之间交互报文。同时为阻止CPU之间进行报文交互，PCIE Local Node需要将会话进行隔离。NIC侧内核需要将queue与指定的node进行绑定。申请内存做DMA保证内存访问一致性。
   
+  https://github.com/qssec/Hades-lite/blob/master/%E5%9B%BE%E7%89%87%201.png
   
 3、 使用说明
 
