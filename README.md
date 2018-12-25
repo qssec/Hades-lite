@@ -12,17 +12,17 @@ Hades-lite
 
 core0 为物理CPU1，core1为物理CPU2，core2为物理CPU3，core3为物理CPU4。服务器将每颗CPU引出的物理内存作为LocalMemory，访问时采用访问本地内存优先的策略，阻止CPU之间交互报文。同时为阻止CPU之间进行报文交互，PCIE Local Node需要将会话进行隔离。NIC侧内核需要将queue与指定的node进行绑定。申请内存做DMA保证内存访问一致性。
 
-！[image](https://github.com/qssec/Hades-lite/blob/master-1/%E5%9B%BE%E7%89%87%201.png)
+![image](%E5%9B%BE%E7%89%87%201.png)
 
 网卡队列与内核中断绑定： NIC QueueIrq绑定 网卡队列与中断绑定以后能够保证队列的同源同宿，核与核之间并行处理报文。在实际使用时如果出现频繁中断的情况需要加入中断合并处理，减少中断次数。
 
 驱动层面的处理流程如下图： 核心处理模块流程：
 
-https://github.com/qssec/Hades-lite/blob/master-1/%E5%9B%BE%E7%89%87%202.png
+![image](%E5%9B%BE%E7%89%87%202.png)
 
 Tcp流量举例，当发生攻击时首先检测流量是否在白名单中，如果在然后检测是否超时，没有超时的情况放行，对于出机房方向的流量默认放行，置标志位为永久有效。对于没有在白名单，或者受防护主机列表里面的流量，进入下一级防护流程。并记录当前流量属性。作为后续异常报文识别判断依据。
 
-https://github.com/qssec/Hades-lite/blob/master-1/%E5%9B%BE%E7%89%87%203.png
+![image](%E5%9B%BE%E7%89%87%203.png)
 
 白名单超时报文处理：当流表中流量发生超时以后，检测是否还有会话保持，如果超过一定时间没有会话进来则进行老化处理，对于大流量攻击导致的会话表项超载，需要丢弃此会话。 流量整形：对于正常通过防御流程的报文，如果还是超过本地防御阈值的情况，进行流量整形处理，将超过阈值的流量进行丢弃处理，保证不会因为流量过高导致服务器被打挂。
 
@@ -30,11 +30,13 @@ https://github.com/qssec/Hades-lite/blob/master-1/%E5%9B%BE%E7%89%87%203.png
 
 A.给内核网卡驱动打补丁，目前适用内核4.4.104版本
 
-patch -p1 < ${SRC_DIR}/ixgbe-4.4.104.patch`
+```shell
+patch -p1 < ${SRC_DIR}/ixgbe-4.4.104.patch
+```
 
 B.将ddos.c 放入如下内核目录中
 
-/linux/linux/drivers/net/ethernet/intel/ixgbe/
+`/linux/linux/drivers/net/ethernet/intel/ixgbe/`
 
 C.编译内核
 
